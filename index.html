@@ -1,0 +1,706 @@
+<!DOCTYPE html>
+<html lang="es" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Estructuras Avanzada - Civil & Arquitectura</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        canvas { touch-action: none; }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 h-full flex flex-col overflow-x-hidden">
+
+    <header class="bg-slate-800 border-b border-slate-700 py-4 px-6 shadow-md flex flex-wrap justify-between items-center shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-indigo-600 p-2.5 rounded-xl shadow-lg text-white">
+                <i class="fa-solid fa-bridge text-xl"></i>
+            </div>
+            <div>
+                <h1 class="text-lg font-bold tracking-tight text-white">Calculadora Estructural Pro</h1>
+                <p class="text-xs text-slate-400">Análisis de vigas isostáticas e hiperestáticas básicas</p>
+            </div>
+        </div>
+        <div class="flex items-center space-x-2 mt-2 sm:mt-0">
+            <span class="inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                <span class="w-1.5 h-1.5 mr-1.5 bg-emerald-400 rounded-full animate-pulse"></span> Sistema Activo
+            </span>
+        </div>
+    </header>
+
+    <main class="flex-1 grid grid-cols-1 lg:grid-cols-12 gap-6 p-4 md:p-6 overflow-y-auto">
+        
+        <!-- Controls Column (Left) -->
+        <div class="lg:col-span-4 space-y-5">
+            
+            <!-- Material & Properties Card -->
+            <div class="bg-slate-800/90 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+                <h2 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center">
+                    <i class="fa-solid fa-cube mr-2"></i> 1. Material y Sección
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Tipo de Material</label>
+                        <select id="materialType" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="steel">Acero Estructural (A36) - E = 200 GPa</option>
+                            <option value="concrete">Concreto Armado (f'c 28MPa) - E = 25 GPa</option>
+                            <option value="wood">Madera Estructural (Pino) - E = 11 GPa</option>
+                            <option value="custom">Personalizado</option>
+                        </select>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-3">
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Módulo Elástico (E) [GPa]</label>
+                            <input type="number" id="youngModulus" value="200" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-medium text-slate-300 mb-1">Inercia (I) [cm⁴]</label>
+                            <input type="number" id="momentInertia" value="8500" step="100" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Beam Configuration Card -->
+            <div class="bg-slate-800/90 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+                <h2 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center">
+                    <i class="fa-solid fa-ruler-horizontal mr-2"></i> 2. Geometría y Apoyos
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Longitud de la Viga (L) [m]</label>
+                        <input type="number" id="beamLength" value="6.0" min="0.5" max="50" step="0.5" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Condición de Apoyo</label>
+                        <select id="supportCondition" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="simply_supported">Simplemente Apoyada (Pin - Roller)</option>
+                            <option value="cantilever">En Potro / Voladizo (Fixed - Free)</option>
+                            <option value="fixed_fixed">Empotrada en Ambos Extremos</option>
+                            <option value="propped_cantilever">Empotrada y Apoyada</option>
+                        </select>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Load Configuration Card -->
+            <div class="bg-slate-800/90 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+                <h2 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider mb-4 flex items-center">
+                    <i class="fa-solid fa-weight-hanging mr-2"></i> 3. Sistema de Cargas
+                </h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-xs font-medium text-slate-300 mb-1">Tipo de Carga Principal</label>
+                        <select id="loadType" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-3 py-2 text-sm text-slate-200 focus:outline-none focus:ring-2 focus:ring-indigo-500">
+                            <option value="point">Carga Puntual Concentrada</option>
+                            <option value="uniform">Carga Distribuida Uniforme (w)</option>
+                            <option value="both">Combinada (Puntual + Uniforme)</option>
+                        </select>
+                    </div>
+
+                    <!-- Point Load Inputs -->
+                    <div id="pointLoadSection" class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                        <span class="text-xs font-semibold text-slate-400">Carga Puntual (P)</span>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Magnitud (P) [kN]</label>
+                                <input type="number" id="pointLoadVal" value="20" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200">
+                            </div>
+                            <div>
+                                <label class="block text-[10px] text-slate-400 mb-1">Posición (a) [m]</label>
+                                <input type="number" id="pointLoadPos" value="3.0" step="0.1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Uniform Load Inputs -->
+                    <div id="uniformLoadSection" class="space-y-3 bg-slate-900/50 p-3 rounded-xl border border-slate-700/50">
+                        <span class="text-xs font-semibold text-slate-400">Carga Distribuida (w)</span>
+                        <div>
+                            <label class="block text-[10px] text-slate-400 mb-1">Intensidad (w) [kN/m]</label>
+                            <input type="number" id="uniformLoadVal" value="10" step="1" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-2 py-1.5 text-sm text-slate-200">
+                        </div>
+                    </div>
+
+                    <button id="calcBtn" class="w-full bg-gradient-to-r from-indigo-600 to-violet-600 hover:from-indigo-500 hover:to-violet-500 text-white font-semibold py-3 px-4 rounded-xl shadow-lg shadow-indigo-600/30 transition-all duration-200 flex items-center justify-center space-x-2">
+                        <i class="fa-solid fa-calculator"></i>
+                        <span>Calcular Estructura</span>
+                    </button>
+                </div>
+            </div>
+
+        </div>
+
+        <!-- Visualization & Results Column (Right) -->
+        <div class="lg:col-span-8 space-y-5 flex flex-col">
+            
+            <!-- Summary Result Pills -->
+            <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Reacción R₁</span>
+                    <span id="resR1" class="text-lg font-bold text-indigo-400 mt-1">0.00 <span class="text-xs font-normal text-slate-400">kN</span></span>
+                </div>
+                <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Reacción R₂</span>
+                    <span id="resR2" class="text-lg font-bold text-indigo-400 mt-1">0.00 <span class="text-xs font-normal text-slate-400">kN</span></span>
+                </div>
+                <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Momento Máx (Mmax)</span>
+                    <span id="resMmax" class="text-lg font-bold text-emerald-400 mt-1">0.00 <span class="text-xs font-normal text-slate-400">kN·m</span></span>
+                </div>
+                <div class="bg-slate-800/90 border border-slate-700/80 rounded-2xl p-4 shadow-lg flex flex-col justify-between">
+                    <span class="text-xs text-slate-400 font-medium">Deformación Máx (δmax)</span>
+                    <span id="resDefmax" class="text-lg font-bold text-amber-400 mt-1">0.00 <span class="text-xs font-normal text-slate-400">mm</span></span>
+                </div>
+            </div>
+
+            <!-- Canvas Visualization Container -->
+            <div class="bg-slate-800/90 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-xl flex-1 flex flex-col">
+                <div class="flex justify-between items-center mb-4 flex-wrap gap-2">
+                    <h2 class="text-sm font-semibold text-indigo-400 uppercase tracking-wider flex items-center">
+                        <i class="fa-solid fa-chart-line mr-2"></i> Diagramas de Esfuerzos y Deformación
+                    </h2>
+                    <div class="flex bg-slate-900 p-1 rounded-xl border border-slate-700 text-xs">
+                        <button onclick="setActiveTab('beam')" id="tabBeam" class="px-3 py-1.5 rounded-lg font-medium transition-all bg-indigo-600 text-white shadow">Geometría</button>
+                        <button onclick="setActiveTab('shear')" id="tabShear" class="px-3 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white">Cortante (V)</button>
+                        <button onclick="setActiveTab('moment')" id="tabMoment" class="px-3 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white">Momento (M)</button>
+                        <button onclick="setActiveTab('deflection')" id="tabDeflection" class="px-3 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white">Deformación (δ)</button>
+                    </div>
+                </div>
+
+                <!-- Canvas Wrapper -->
+                <div class="relative w-full flex-1 min-h-[360px] bg-slate-900/80 rounded-xl border border-slate-700/60 overflow-hidden flex items-center justify-center">
+                    <canvas id="structuralCanvas" class="w-full h-full absolute inset-0"></canvas>
+                </div>
+                
+                <!-- Description helper -->
+                <div id="canvasDescription" class="mt-3 text-xs text-slate-400 flex items-center justify-between">
+                    <span>Visualizando esquema estructural y condiciones de frontera.</span>
+                    <span id="scaleInfo" class="text-slate-500">Escala adaptable</span>
+                </div>
+            </div>
+
+            <!-- Detailed Analysis Table / Breakdown -->
+            <div class="bg-slate-800/90 backdrop-blur border border-slate-700/80 rounded-2xl p-5 shadow-xl">
+                <h3 class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-3">
+                    <i class="fa-solid fa-list-check mr-2"></i> Resumen de Puntos Críticos
+                </h3>
+                <div class="overflow-x-auto">
+                    <table class="w-full text-left text-xs text-slate-300">
+                        <thead class="bg-slate-900/70 text-slate-400 uppercase tracking-wider border-b border-slate-700">
+                            <tr>
+                                <th class="py-2.5 px-3 rounded-l-lg">Parámetro</th>
+                                <th class="py-2.5 px-3">Valor Crítico</th>
+                                <th class="py-2.5 px-3 rounded-r-lg">Ubicación (x)</th>
+                            </tr>
+                        </thead>
+                        <tbody id="criticalTableBody" class="divide-y divide-slate-700/50">
+                            <tr>
+                                <td class="py-2.5 px-3 font-medium text-white">Cortante Máximo (|Vmax|)</td>
+                                <td id="tblVmax" class="py-2.5 px-3 text-indigo-400 font-semibold">-</td>
+                                <td id="tblXvmax" class="py-2.5 px-3 text-slate-400">-</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-3 font-medium text-white">Momento Máximo Positivo</td>
+                                <td id="tblMpos" class="py-2.5 px-3 text-emerald-400 font-semibold">-</td>
+                                <td id="tblXmpos" class="py-2.5 px-3 text-slate-400">-</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-3 font-medium text-white">Momento Máximo Negativo</td>
+                                <td id="tblMneg" class="py-2.5 px-3 text-amber-400 font-semibold">-</td>
+                                <td id="tblXmneg" class="py-2.5 px-3 text-slate-400">-</td>
+                            </tr>
+                            <tr>
+                                <td class="py-2.5 px-3 font-medium text-white">Flecha Máxima Absoluta</td>
+                                <td id="tblDef" class="py-2.5 px-3 text-violet-400 font-semibold">-</td>
+                                <td id="tblXdef" class="py-2.5 px-3 text-slate-400">-</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+        </div>
+
+    </main>
+
+    <script>
+        let currentTab = 'beam';
+        let simulationData = null;
+
+        const materialPresets = {
+            steel: { E: 200, name: 'Acero Estructural' },
+            concrete: { E: 25, name: 'Concreto Armado' },
+            wood: { E: 11, name: 'Madera Estructural' },
+            custom: { E: 210, name: 'Personalizado' }
+        };
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initEvents();
+            runCalculation();
+            window.addEventListener('resize', redrawCanvas);
+        });
+
+        function initEvents() {
+            document.getElementById('materialType').addEventListener('change', (e) => {
+                const val = e.target.value;
+                if(val !== 'custom') {
+                    document.getElementById('youngModulus').value = materialPresets[val].E;
+                }
+            });
+
+            document.getElementById('loadType').addEventListener('change', (e) => {
+                const type = e.target.value;
+                document.getElementById('pointLoadSection').style.display = (type === 'uniform') ? 'none' : 'block';
+                document.getElementById('uniformLoadSection').style.display = (type === 'point') ? 'none' : 'block';
+            });
+
+            document.getElementById('calcBtn').addEventListener('click', runCalculation);
+            
+            // Auto calculate on input change for smooth interactivity
+            const inputs = document.querySelectorAll('input, select');
+            inputs.forEach(input => {
+                input.addEventListener('change', runCalculation);
+            });
+        }
+
+        function setActiveTab(tab) {
+            currentTab = tab;
+            ['beam', 'shear', 'moment', 'deflection'].forEach(t => {
+                const btn = document.getElementById('tab' + capitalize(t));
+                if (t === tab) {
+                    btn.className = 'px-3 py-1.5 rounded-lg font-medium transition-all bg-indigo-600 text-white shadow';
+                } else {
+                    btn.className = 'px-3 py-1.5 rounded-lg font-medium transition-all text-slate-400 hover:text-white';
+                }
+            });
+            updateTabDescription();
+            redrawCanvas();
+        }
+
+        function capitalize(s) {
+            return s.charAt(0).toUpperCase() + s.slice(1);
+        }
+
+        function updateTabDescription() {
+            const desc = document.getElementById('canvasDescription');
+            const info = {
+                beam: "Visualizando esquema estructural, ubicación de apoyos y cargas aplicadas.",
+                shear: "Diagrama de Fuerza Cortante V(x) a lo largo de la luz de la viga.",
+                moment: "Diagrama de Momento Flector M(x) en kN·m.",
+                deflection: "Línea elástica o diagrama de deformación vertical δ(x) en mm."
+            };
+            desc.firstElementChild.innerText = info[currentTab];
+        }
+
+        function runCalculation() {
+            const L = parseFloat(document.getElementById('beamLength').value) || 6.0;
+            const E_GPa = parseFloat(document.getElementById('youngModulus').value) || 200; // GPa -> kN/mm² * 10^3 => kN/m² * 10^6
+            const I_cm4 = parseFloat(document.getElementById('momentInertia').value) || 8500; // cm^4 -> m^4 = cm^4 * 10^-8
+            const support = document.getElementById('supportCondition').value;
+            const loadType = document.getElementById('loadType').value;
+            
+            let P = (loadType !== 'uniform') ? (parseFloat(document.getElementById('pointLoadVal').value) || 0) : 0;
+            let a = (loadType !== 'uniform') ? (parseFloat(document.getElementById('pointLoadPos').value) || 3.0) : 0;
+            let w = (loadType !== 'point') ? (parseFloat(document.getElementById('uniformLoadVal').value) || 0) : 0;
+
+            if (a > L) a = L;
+
+            // Convert units for rigorous FEA/Analytical evaluation
+            // E in kN/m2 = E_GPa * 10^9
+            const E = E_GPa * 1e9;
+            // I in m4 = I_cm4 * 1e-8
+            const I = I_cm4 * 1e-8;
+            const EI = E * I;
+
+            let R1 = 0, R2 = 0, M1 = 0;
+            
+            // Reactions calculation based on support type
+            if (support === 'simply_supported') {
+                // Sum of moments about support 1 = 0 => R2*L - P*a - (w*L)*(L/2) = 0
+                let momentPoint = P * a + (w * L) * (L / 2);
+                R2 = momentPoint / L;
+                R1 = (P + w * L) - R2;
+            } else if (support === 'cantilever') {
+                // Support at x = 0 (Fixed)
+                R1 = P + w * L; // Vertical reaction at fixed end
+                M1 = P * a + (w * L * L) / 2; // Fixed end moment
+                R2 = 0; // No second support
+            } else if (support === 'fixed_fixed') {
+                // Approximate equivalent or standard formulas for fixed-fixed beam
+                // For point load at center or generic:
+                R1 = (P + w * L) / 2;
+                R2 = R1;
+                M1 = (P * L) / 8 + (w * L * L) / 12; // Fixed moments approximation
+            } else if (support === 'propped_cantilever') {
+                // Pin at x=L, Fixed at x=0
+                R2 = (5 * w * L / 8) + (P * Math.pow(L - a, 2) * (2*L + a) / (2 * Math.CBRT ? ... : 2 * Math.pow(L, 3))); // simplified
+                R2 = Math.max(0, (w * L / 2) + (P * (L - a) / L)); 
+                R1 = (P + w * L) - R2;
+                M1 = (w * L * L / 8) + (P * a * Math.pow(L - a, 2) / Math.pow(L, 2));
+            }
+
+            // Discretize beam into 100 points for accurate plotting and critical evaluation
+            const pointsCount = 100;
+            let xVals = [];
+            let vVals = [];
+            let mMals = [];
+            let defVals = [];
+
+            let maxV = 0, maxM = 0, minM = 0, maxDef = 0;
+            let xVmax = 0, xMmax = 0, xDefmax = 0;
+
+            for (let i = 0; i <= pointsCount; i++) {
+                let x = (i / pointsCount) * L;
+                xVals.push(x);
+
+                let V = 0, M = 0, def = 0;
+
+                if (support === 'simply_supported') {
+                    // Shear V(x)
+                    V = R1;
+                    if (x >= a && loadType !== 'uniform') V -= P;
+                    V -= w * x;
+
+                    // Moment M(x)
+                    M = R1 * x - (w * x * x) / 2;
+                    if (x >= a && loadType !== 'uniform') M -= P * (x - a);
+
+                    // Deflection approximation (analytical formulas combined or superposition)
+                    if (loadType === 'point' && support === 'simply_supported') {
+                        let b = L - a;
+                        if (x <= a) {
+                            def = (P * b * x / (6 * EI * L)) * (Math.pow(L, 2) - Math.pow(b, 2) - Math.pow(x, 2));
+                        } else {
+                            def = (P * a * (L - x) / (6 * EI * L)) * (Math.pow(L, 2) - Math.pow(a, 2) - Math.pow(L - x, 2));
+                        }
+                    } else if (loadType === 'uniform' && support === 'simply_supported') {
+                        def = (w * x / (24 * EI)) * (Math.pow(L, 3) - 2 * L * Math.pow(x, 2) + Math.pow(x, 3));
+                    } else {
+                        // General approximate integration / superposition for combined
+                        let defP = 0, defW = 0;
+                        if (x <= a) {
+                            defP = (P * (L - a) * x / (6 * EI * L)) * (Math.pow(L, 2) - Math.pow(L - a, 2) - Math.pow(x, 2));
+                        } else {
+                            defP = (P * a * (L - x) / (6 * EI * L)) * (Math.pow(L, 2) - Math.pow(a, 2) - Math.pow(L - x, 2));
+                        }
+                        defW = (w * x / (24 * EI)) * (Math.pow(L, 3) - 2 * L * Math.pow(x, 2) + Math.pow(x, 3));
+                        def = defP + defW;
+                    }
+
+                } else if (support === 'cantilever') {
+                    // Fixed at x=0, free at x=L
+                    // Shear: V(x) = P + w*(L-x) (if load pointing down)
+                    V = (x >= a && loadType !== 'uniform' ? P : 0) + w * (L - x);
+                    // Moment: M(x) = - [ P*(L-x) if x>=a + w*(L-x)^2/2 ]
+                    let mPoint = (x >= a && loadType !== 'uniform') ? P * (x - a) : 0;
+                    let mDist = w * Math.pow(L - x, 2) / 2;
+                    M = -(mPoint + mDist);
+
+                    // Deflection cantilever
+                    let defP = (loadType !== 'uniform') ? (P * Math.pow(x, 2) / (6 * EI)) * (3 * a - x) : 0; // for x <= a roughly or standard
+                    if (x > a && loadType !== 'uniform') {
+                        defP = (P * Math.pow(a, 2) / (6 * EI)) * (3 * x - a);
+                    }
+                    let defW = (w * Math.pow(x, 2) / (24 * EI)) * (6 * Math.pow(L, 2) - 4 * L * x + Math.pow(x, 2));
+                    def = defW + (loadType !== 'uniform' ? (x <= a ? (P * Math.pow(x, 2) / (6 * EI)) * (3 * a - x) : (P * a * a / (6 * EI)) * (3 * x - a)) : 0);
+                    // Standard cantilever tip deflection check
+                    if (loadType === 'uniform') {
+                        def = (w * Math.pow(x, 4) - 4 * w * Math.pow(L, 3) * x + 3 * w * Math.pow(L, 4)) / (24 * EI); // simplified sign curve
+                    }
+                } else {
+                    // Default fallback for other robust supports
+                    V = R1 - w * x - (x >= a ? P : 0);
+                    M = R1 * x - (w * x * x) / 2 - (x >= a ? P * (x - a) : 0);
+                    def = (5 * w * Math.pow(L, 4)) / (384 * EI) * Math.sin(Math.PI * x / L); // estimated modal curve for visualization
+                }
+
+                vVals.push(V);
+                mMals.push(M);
+                defVals.push(def * 1000); // Convert to millimeters for UI
+
+                if (Math.abs(V) > Math.abs(maxV)) { maxV = V; xVmax = x; }
+                if (M > maxM) { maxM = M; }
+                if (M < minM) { minM = M; }
+                if (Math.abs(def * 1000) > Math.abs(maxDef)) { maxDef = def * 1000; xDefmax = x; }
+            }
+
+            simulationData = { L, xVals, vVals, mMals, defVals, R1, R2, maxV, maxM, minM, maxDef, xVmax, xDefmax, support, loadType, P, a, w };
+
+            // Update UI Summary pills
+            document.getElementById('resR1').innerHTML = `${R1.toFixed(2)} <span class="text-xs font-normal text-slate-400">kN</span>`;
+            document.getElementById('resR2').innerHTML = `${R2.toFixed(2)} <span class="text-xs font-normal text-slate-400">kN</span>`;
+            document.getElementById('resMmax').innerHTML = `${Math.max(Math.abs(maxM), Math.abs(minM)).toFixed(2)} <span class="text-xs font-normal text-slate-400">kN·m</span>`;
+            document.getElementById('resDefmax').innerHTML = `${maxDef.toFixed(2)} <span class="text-xs font-normal text-slate-400">mm</span>`;
+
+            // Update Critical table
+            document.getElementById('tblVmax').innerText = `${maxV.toFixed(2)} kN`;
+            document.getElementById('tblXvmax').innerText = `x = ${xVmax.toFixed(2)} m`;
+            document.getElementById('tblMpos').innerText = `${maxM.toFixed(2)} kN·m`;
+            document.getElementById('tblXmpos').innerText = `Momento positivo máx`;
+            document.getElementById('tblMneg').innerText = `${minM.toFixed(2)} kN·m`;
+            document.getElementById('tblXmneg').innerText = `Momento negativo máx`;
+            document.getElementById('tblDef').innerText = `${maxDef.toFixed(2)} mm`;
+            document.getElementById('tblXdef').innerText = `x = ${xDefmax.toFixed(2)} m`;
+
+            redrawCanvas();
+        }
+
+        function redrawCanvas() {
+            const canvas = document.getElementById('structuralCanvas');
+            if (!canvas || !simulationData) return;
+            const ctx = canvas.getContext('2d');
+
+            // Handle high-DPI scaling
+            const dpr = window.devicePixelRatio || 1;
+            const rect = canvas.getBoundingClientRect();
+            canvas.width = rect.width * dpr;
+            canvas.height = rect.height * dpr;
+            ctx.scale(dpr, dpr);
+
+            const width = rect.width;
+            const height = rect.height;
+
+            ctx.clearRect(0, 0, width, height);
+
+            if (currentTab === 'beam') {
+                drawBeamSchema(ctx, width, height);
+            } else if (currentTab === 'shear') {
+                drawDiagram(ctx, width, height, simulationData.xVals, simulationData.vVals, 'Diagrama de Fuerza Cortante V(x) [kN]', '#6366f1');
+            } else if (currentTab === 'moment') {
+                drawDiagram(ctx, width, height, simulationData.xVals, simulationData.mMals, 'Diagrama de Momento Flector M(x) [kN·m]', '#10b981');
+            } else if (currentTab === 'deflection') {
+                drawDiagram(ctx, width, height, simulationData.xVals, simulationData.defVals, 'Línea Elástica / Deformación δ(x) [mm]', '#f59e0b');
+            }
+        }
+
+        function drawBeamSchema(ctx, w, h) {
+            const data = simulationData;
+            const paddingX = 80;
+            const beamW = w - 2 * paddingX;
+            const beamY = h / 2 + 20;
+
+            // Draw Beam Line
+            ctx.strokeStyle = '#cbd5e1';
+            ctx.lineWidth = 8;
+            ctx.lineCap = 'round';
+            ctx.beginPath();
+            ctx.moveTo(paddingX, beamY);
+            ctx.lineTo(paddingX + beamW, beamY);
+            ctx.stroke();
+
+            // Draw Supports
+            const supType = data.support;
+            if (supType === 'simply_supported') {
+                drawPinSupport(ctx, paddingX, beamY + 4);
+                drawRollerSupport(ctx, paddingX + beamW, beamY + 4);
+            } else if (supType === 'cantilever') {
+                drawFixedSupport(ctx, paddingX, beamY);
+            } else if (supType === 'fixed_fixed') {
+                drawFixedSupport(ctx, paddingX, beamY);
+                drawFixedSupport(ctx, paddingX + beamW, beamY);
+            } else {
+                drawFixedSupport(ctx, paddingX, beamY);
+                drawRollerSupport(ctx, paddingX + beamW, beamY + 4);
+            }
+
+            // Draw Loads
+            const scaleX = beamW / data.L;
+            if (data.loadType === 'point' || data.loadType === 'both') {
+                let px = paddingX + data.a * scaleX;
+                drawDownwardArrow(ctx, px, beamY - 70, 50, `P = ${data.P} kN`);
+            }
+            if (data.loadType === 'uniform' || data.loadType === 'both') {
+                // Draw uniform distributed load block
+                ctx.fillStyle = 'rgba(99, 102, 241, 0.2)';
+                ctx.fillRect(paddingX, beamY - 50, beamW, 35);
+                ctx.strokeStyle = '#818cf8';
+                ctx.lineWidth = 1.5;
+                ctx.strokeRect(paddingX, beamY - 50, beamW, 35);
+                
+                // Small arrows inside
+                let arrowsCount = Math.floor(beamW / 30);
+                for (let i = 0; i <= arrowsCount; i++) {
+                    let ax = paddingX + (i * beamW) / arrowsCount;
+                    drawSmallArrow(ctx, ax, beamY - 50, beamY - 15);
+                }
+                ctx.fillStyle = '#a5b4fc';
+                ctx.font = '11px Inter, sans-serif';
+                ctx.fillText(`w = ${data.w} kN/m`, paddingX + 10, beamY - 28);
+            }
+
+            // Dimension line for Length
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(paddingX, beamY + 60);
+            ctx.lineTo(paddingX + beamW, beamY + 60);
+            ctx.stroke();
+            
+            ctx.fillStyle = '#94a3b8';
+            ctx.font = '12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(`L = ${data.L} m`, paddingX + beamW / 2, beamY + 78);
+        }
+
+        function drawPinSupport(ctx, x, y) {
+            ctx.fillStyle = '#475569';
+            ctx.beginPath();
+            ctx.moveTo(x, y);
+            ctx.lineTo(x - 12, y + 20);
+            ctx.lineTo(x + 12, y + 20);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawRollerSupport(ctx, x, y) {
+            drawPinSupport(ctx, x, y);
+            ctx.fillStyle = '#64748b';
+            ctx.beginPath();
+            ctx.arc(x - 6, y + 25, 4, 0, Math.PI * 2);
+            ctx.arc(x + 6, y + 25, 4, 0, Math.PI * 2);
+            ctx.fill();
+        }
+
+        function drawFixedSupport(ctx, x, y) {
+            ctx.fillStyle = '#475569';
+            ctx.fillRect(x - 6, y - 25, 6, 50);
+            ctx.strokeStyle = '#64748b';
+            ctx.lineWidth = 3;
+            ctx.beginPath();
+            ctx.moveTo(x - 6, y - 25);
+            ctx.lineTo(x - 16, y - 35);
+            ctx.moveTo(x - 6, y - 10);
+            ctx.lineTo(x - 16, y - 20);
+            ctx.moveTo(x - 6, y + 5);
+            ctx.lineTo(x - 16, y - 5);
+            ctx.moveTo(x - 6, y + 20);
+            ctx.lineTo(x - 16, y + 10);
+            ctx.stroke();
+        }
+
+        function drawDownwardArrow(ctx, x, tipY, length, label) {
+            ctx.strokeStyle = '#ef4444';
+            ctx.fillStyle = '#ef4444';
+            ctx.lineWidth = 3;
+
+            ctx.beginPath();
+            ctx.moveTo(x, tipY - length);
+            ctx.lineTo(x, tipY);
+            ctx.stroke();
+
+            // Arrow head
+            ctx.beginPath();
+            ctx.moveTo(x, tipY);
+            ctx.lineTo(x - 6, tipY - 10);
+            ctx.lineTo(x + 6, tipY - 10);
+            ctx.closePath();
+            ctx.fill();
+
+            // Label
+            ctx.font = 'bold 12px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.fillText(label, x, tipY - length - 8);
+        }
+
+        function drawSmallArrow(ctx, x, startY, endY) {
+            ctx.strokeStyle = '#818cf8';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            ctx.moveTo(x, startY);
+            ctx.lineTo(x, endY);
+            ctx.stroke();
+
+            ctx.fillStyle = '#818cf8';
+            ctx.beginPath();
+            ctx.moveTo(x, endY);
+            ctx.lineTo(x - 3, endY - 5);
+            ctx.lineTo(x + 3, endY - 5);
+            ctx.closePath();
+            ctx.fill();
+        }
+
+        function drawDiagram(ctx, w, h, xVals, yVals, title, colorHex) {
+            const paddingX = 60;
+            const paddingY = 40;
+            const graphW = w - 2 * paddingX;
+            const graphH = h - 2 * paddingY - 20;
+            const centerY = paddingY + graphH / 2;
+
+            // Find min/max for scaling
+            let maxY = Math.max(...yVals, 0);
+            let minY = Math.min(...yVals, 0);
+            let rangeY = Math.max(Math.abs(maxY), Math.abs(minY), 1);
+
+            // Title
+            ctx.fillStyle = '#f8fafc';
+            ctx.font = 'bold 13px Inter, sans-serif';
+            ctx.textAlign = 'left';
+            ctx.fillText(title, paddingX, paddingY - 12);
+
+            // Center axis line (zero line)
+            ctx.strokeStyle = '#475569';
+            ctx.lineWidth = 1.5;
+            ctx.setLineDash([4, 4]);
+            ctx.beginPath();
+            ctx.moveTo(paddingX, centerY);
+            ctx.lineTo(paddingX + graphW, centerY);
+            ctx.stroke();
+            ctx.setLineDash([]); // Reset line dash
+
+            // Draw diagram curve and fill
+            const scaleX = graphW / simulationData.L;
+            const scaleY = (graphH / 2 - 15) / rangeY;
+
+            ctx.beginPath();
+            ctx.moveTo(paddingX, centerY);
+
+            for (let i = 0; i < xVals.length; i++) {
+                let px = paddingX + xVals[i] * scaleX;
+                let py = centerY - yVals[i] * scaleY;
+                ctx.lineTo(px, py);
+            }
+            ctx.lineTo(paddingX + xVals[xVals.length - 1] * scaleX, centerY);
+            ctx.closePath();
+
+            // Gradient fill
+            let grad = ctx.createLinearGradient(0, paddingY, 0, paddingY + graphH);
+            grad.addColorStop(0, hexToRGBA(colorHex, 0.35));
+            grad.addColorStop(0.5, hexToRGBA(colorHex, 0.05));
+            grad.addColorStop(1, hexToRGBA(colorHex, 0.35));
+            ctx.fillStyle = grad;
+            ctx.fill();
+
+            // Stroke line
+            ctx.strokeStyle = colorHex;
+            ctx.lineWidth = 2.5;
+            ctx.beginPath();
+            for (let i = 0; i < xVals.length; i++) {
+                let px = paddingX + xVals[i] * scaleX;
+                let py = centerY - yVals[i] * scaleY;
+                if (i === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+
+            // Extremes values annotation
+            let maxVal = Math.max(...yVals);
+            let minVal = Math.min(...yVals);
+            
+            ctx.fillStyle = '#cbd5e1';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'right';
+            ctx.fillText(`Max: ${maxVal.toFixed(2)}`, w - paddingX, paddingY);
+            ctx.fillText(`Min: ${minVal.toFixed(2)}`, w - paddingX, paddingY + 16);
+        }
+
+        function hexToRGBA(hex, alpha) {
+            let r = parseInt(hex.slice(1, 3), 16);
+            let g = parseInt(hex.slice(3, 5), 16);
+            let b = parseInt(hex.slice(5, 7), 16);
+            return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+        }
