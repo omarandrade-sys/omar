@@ -1,2 +1,2 @@
 # omar
-pagina de calculos estrucuturales
+pagina de calculos estructurales
